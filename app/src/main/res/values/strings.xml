@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Wallpaper Haven</string>
+    <string name="selected_file">Selected File: %1$s</string>
+    <string name="uploading">Uploading...</string>
+    <string name="upload_successful">Upload successful</string>
+    <string name="upload_failed">Upload failed: %1$s</string>
+    <string name="no_file_selected">No file selected</string>
+    <string name="failed_to_load_categories">Failed to load categories.</string>
+    <string name="upload_wallpaper">Upload Wallpaper</string>
+    <string name="download_wallpaper">Download Wallpaper</string>
+    <string name="upload">Upload</string>
+    <string name="selected_file_none">Selected File:</string>
+    <string name="select_file">Select File</string>
+    <string name="enter_name">Name</string>
+    <string name="name">Choose name</string>
+    <string name="category">Category</string>
+</resources>

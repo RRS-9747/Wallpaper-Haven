@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".DownloadActivity">
+
+    <!-- Category Spinner -->
+    <TextView
+        android:id="@+id/categoryLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Category"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"/>
+
+    <Spinner
+        android:id="@+id/categorySpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/categoryLabel"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:minHeight="48dp" />
+
+    <!-- Show Wallpapers Button -->
+    <Button
+        android:id="@+id/showWallpapersButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/categorySpinner"
+        android:layout_centerHorizontal="true"
+    android:layout_marginTop="16dp"
+    android:text="Show Wallpapers"/>
+
+
+    <!-- Wallpaper RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/wallpaperRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/showWallpapersButton"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:numColumns="3" /> <!-- Displaying 3 columns -->
+
+    <ProgressBar
+        android:id="@+id/loadingIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone"/>
+
+
+</RelativeLayout>
