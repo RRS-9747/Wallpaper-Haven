@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.squareup.picasso.Picasso;
 import com.startapp.sdk.adsbase.StartAppAd;
 import com.startapp.sdk.adsbase.adlisteners.AdDisplayListener;
@@ -26,6 +27,8 @@ public class FullImageActivity extends AppCompatActivity {
 
     private String imageUrl;
     private StartAppAd startAppAd;
+    private ImageView fullImageView;
+    private Button downloadButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,23 +36,31 @@ public class FullImageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_full_image);
 
         initializeViews();
+        loadImage();
         setupListeners();
     }
 
     private void initializeViews() {
-        ImageView fullImageView = findViewById(R.id.fullImageView);
-        imageUrl = getIntent().getStringExtra("image_url");
+        fullImageView = findViewById(R.id.fullImageView);
+        downloadButton = findViewById(R.id.downloadButton);
         startAppAd = new StartAppAd(this);
+        imageUrl = getIntent().getStringExtra("image_url");
+    }
+
+    private void loadImage() {
         if (imageUrl != null) {
             Glide.with(this)
                     .load(imageUrl)
+                    .placeholder(R.drawable.placeholder) // Placeholder image
                     .override(1080, 1920)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL) // Caches both original & resized images
                     .into(fullImageView);
+        } else {
+            showToast("Image URL is not available.");
         }
     }
 
     private void setupListeners() {
-        Button downloadButton = findViewById(R.id.downloadButton);
         downloadButton.setOnClickListener(v -> showAdBeforeDownload());
     }
 
@@ -60,31 +71,41 @@ public class FullImageActivity extends AppCompatActivity {
                 startAppAd.showAd(new AdDisplayListener() {
                     @Override
                     public void adHidden(com.startapp.sdk.adsbase.Ad ad) {
+                        downloadImage();
                     }
 
                     @Override
                     public void adDisplayed(com.startapp.sdk.adsbase.Ad ad) {
+                        // Optional: Add logic if needed when ad is displayed
                     }
 
                     @Override
                     public void adClicked(com.startapp.sdk.adsbase.Ad ad) {
+                        // Optional: Handle ad click
                     }
 
                     @Override
                     public void adNotDisplayed(com.startapp.sdk.adsbase.Ad ad) {
+                        downloadImage(); // Fallback to download if ad not displayed
                     }
                 });
             }
 
             @Override
             public void onFailedToReceiveAd(com.startapp.sdk.adsbase.Ad ad) {
-                downloadImage();
+                downloadImage(); // Directly download if ad loading fails
             }
         });
-        downloadImage();
+        // Start loading the ad
+        startAppAd.loadAd(StartAppAd.AdMode.VIDEO);
     }
 
     private void downloadImage() {
+        if (imageUrl == null) {
+            showToast("Image URL is not available.");
+            return;
+        }
+
         Picasso.get().load(imageUrl).into(new com.squareup.picasso.Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -93,7 +114,7 @@ public class FullImageActivity extends AppCompatActivity {
 
             @Override
             public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                showToast("Failed to download image");
+                showToast("Failed to download image: " + e.getMessage());
             }
 
             @Override
@@ -116,12 +137,13 @@ public class FullImageActivity extends AppCompatActivity {
         try (OutputStream outputStream = imageUri != null ? getContentResolver().openOutputStream(imageUri) : null) {
             if (outputStream != null) {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-                outputStream.close();
                 showToast("Image saved to gallery");
+            } else {
+                showToast("Failed to save image: output stream is null.");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            showToast("Failed to save image");
+            showToast("Failed to save image: " + e.getMessage());
         }
     }
 

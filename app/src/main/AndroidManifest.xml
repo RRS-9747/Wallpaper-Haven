@@ -16,7 +16,7 @@
         android:theme="@style/Theme.GreatWallpaper">
         <meta-data
             android:name="com.startapp.sdk.APPLICATION_ID"
-            android:value="ID_HERE" />
+            android:value="204565355" />
         <meta-data
             android:name="com.startapp.sdk.RETURN_ADS_ENABLED"
             android:value="false" />

@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.startapp.sdk.ads.banner.Banner;
 import com.startapp.sdk.ads.banner.Mrec;
 import com.startapp.sdk.adsbase.StartAppAd;
+import com.startapp.sdk.adsbase.StartAppSDK;
 
 public class MainActivity extends AppCompatActivity {
 

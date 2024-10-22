@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Wallpaper Haven</string>
     <string name="selected_file">Selected File: %1$s</string>
-    <string name="uploading">Uploading...</string>
+    <string name="uploading">Uploading…</string>
     <string name="upload_successful">Upload successful</string>
     <string name="upload_failed">Upload failed: %1$s</string>
     <string name="no_file_selected">No file selected</string>

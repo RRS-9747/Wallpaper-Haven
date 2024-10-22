@@ -20,14 +20,16 @@ import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DownloadActivity extends AppCompatActivity implements WallpaperAdapter.OnItemClickListener {
 
     private Spinner categorySpinner;
     private final List<String> categoryList = new ArrayList<>();
     private ArrayAdapter<String> categoryAdapter;
-    private final List<String> wallpaperUrls = new ArrayList<>();
+    private final Set<String> wallpaperUrls = new HashSet<>(); // Use Set to avoid duplicates
     private WallpaperAdapter wallpaperAdapter;
 
     @Override
@@ -50,7 +52,7 @@ public class DownloadActivity extends AppCompatActivity implements WallpaperAdap
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         categorySpinner.setAdapter(categoryAdapter);
 
-        wallpaperAdapter = new WallpaperAdapter(wallpaperUrls, this);
+        wallpaperAdapter = new WallpaperAdapter(new ArrayList<>(wallpaperUrls), this);
         wallpaperRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
         wallpaperRecyclerView.setAdapter(wallpaperAdapter);
 
@@ -60,7 +62,6 @@ public class DownloadActivity extends AppCompatActivity implements WallpaperAdap
     }
 
     private void setupListeners() {
-        // Setup listener for category selection
         categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -74,7 +75,6 @@ public class DownloadActivity extends AppCompatActivity implements WallpaperAdap
             }
         });
 
-        // Setup listener for manual reload button
         findViewById(R.id.showWallpapersButton).setOnClickListener(v -> {
             String selectedCategory = categorySpinner.getSelectedItem().toString();
             fetchWallpapers(selectedCategory);
@@ -91,69 +91,72 @@ public class DownloadActivity extends AppCompatActivity implements WallpaperAdap
                     }
                     categoryAdapter.notifyDataSetChanged();
                 })
-                .addOnFailureListener(e -> showToast("Failed to load categories from Firebase."));
+                .addOnFailureListener(e -> showToast("Failed to load categories from Firebase: " + e.getMessage()));
     }
 
     private void fetchWallpapers(String category) {
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference storageRef = storage.getReference();
-
-        wallpaperUrls.clear();
-
         if (category == null || category.isEmpty()) {
             showToast("Category cannot be null or empty.");
             return;
         }
 
-        if (category.equals("All")) {
-            // Fetch wallpapers from all categories
-            storageRef.listAll()
-                    .addOnSuccessListener(listResult -> {
-                        List<Task<ListResult>> tasks = new ArrayList<>();
-                        for (StorageReference prefix : listResult.getPrefixes()) {
-                            tasks.add(prefix.listAll());
-                        }
-                        Tasks.whenAllSuccess(tasks)
-                                .addOnSuccessListener(results -> {
-                                    List<String> newWallpaperUrls = new ArrayList<>();
-                                    for (Object obj : results) {
-                                        ListResult result = (ListResult) obj;
-                                        for (StorageReference item : result.getItems()) {
-                                            item.getDownloadUrl().addOnSuccessListener(uri -> {
-                                                newWallpaperUrls.add(uri.toString());
-                                                if (newWallpaperUrls.size() == result.getItems().size()) {
-                                                    wallpaperAdapter.updateWallpapers(newWallpaperUrls);
-                                                }
-                                            }).addOnFailureListener(e -> showToast("Failed to load wallpaper: " + e.getMessage()));
-                                        }
-                                    }
-                                })
-                                .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
-                    })
-                    .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
-        } else {
-            // Fetch wallpapers from the specified category
-            StorageReference categoryRef = storageRef.child(category);
-            categoryRef.listAll()
-                    .addOnSuccessListener(listResult -> {
-                        List<Task<Uri>> tasks = new ArrayList<>();
-                        for (StorageReference item : listResult.getItems()) {
-                            tasks.add(item.getDownloadUrl());
-                        }
-                        Tasks.whenAllSuccess(tasks)
-                                .addOnSuccessListener(downloadUrls -> {
-                                    for (Object obj : downloadUrls) {
-                                        wallpaperUrls.add(obj.toString());
-                                    }
-                                    wallpaperAdapter.updateWallpapers(wallpaperUrls);
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+        wallpaperUrls.clear();
 
-                                })
-                                .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
-                    })
-                    .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
+        if (category.equals("All")) {
+            fetchAllWallpapers(storageRef);
+        } else {
+            fetchCategoryWallpapers(storageRef.child(category));
         }
     }
 
+    private void fetchAllWallpapers(StorageReference storageRef) {
+        storageRef.listAll()
+                .addOnSuccessListener(listResult -> {
+                    List<Task<ListResult>> tasks = new ArrayList<>();
+                    for (StorageReference prefix : listResult.getPrefixes()) {
+                        tasks.add(prefix.listAll());
+                    }
+                    Tasks.whenAllSuccess(tasks)
+                            .addOnSuccessListener(results -> {
+                                for (Object obj : results) {
+                                    ListResult result = (ListResult) obj;
+                                    for (StorageReference item : result.getItems()) {
+                                        item.getDownloadUrl()
+                                                .addOnSuccessListener(uri -> wallpaperUrls.add(uri.toString())) // Add to Set
+                                                .addOnFailureListener(e -> showToast("Failed to load wallpaper: " + e.getMessage()));
+                                    }
+                                }
+                                updateWallpapers(); // Update after all URLs are fetched
+                            })
+                            .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
+                })
+                .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
+    }
+
+    private void fetchCategoryWallpapers(StorageReference categoryRef) {
+        categoryRef.listAll()
+                .addOnSuccessListener(listResult -> {
+                    List<Task<Uri>> tasks = new ArrayList<>();
+                    for (StorageReference item : listResult.getItems()) {
+                        tasks.add(item.getDownloadUrl());
+                    }
+                    Tasks.whenAllSuccess(tasks)
+                            .addOnSuccessListener(downloadUrls -> {
+                                for (Object obj : downloadUrls) {
+                                    wallpaperUrls.add(obj.toString()); // Add to Set
+                                }
+                                updateWallpapers(); // Update after all URLs are fetched
+                            })
+                            .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
+                })
+                .addOnFailureListener(e -> showToast("Failed to load wallpapers: " + e.getMessage()));
+    }
+
+    private void updateWallpapers() {
+        wallpaperAdapter.updateWallpapers(new ArrayList<>(wallpaperUrls)); // Convert Set to List
+    }
 
     @Override
     public void onItemClick(String imageUrl) {
