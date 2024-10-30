@@ -36,6 +36,7 @@ dependencies {
     annotationProcessor libs.glide.compiler
     implementation libs.inapp.sdk
     implementation libs.firebase.storage
+    implementation 'com.google.firebase:firebase-auth:21.0.3'
     implementation libs.firebase.firestore
     implementation libs.picasso
 

@@ -14,4 +14,7 @@
     <string name="enter_name">Name</string>
     <string name="name">Choose name</string>
     <string name="category">Category</string>
+    <string name="downloadButton">Download</string>
+    <string name="set_wallpaperButton">Set Wallpaper</string>
+    <string name="uploading_to_community">Uploading to Community</string>
 </resources>

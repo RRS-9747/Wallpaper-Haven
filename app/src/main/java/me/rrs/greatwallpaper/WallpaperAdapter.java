@@ -15,7 +15,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import java.util.List;
 
-import me.rrs.greatwallpaper.DiffUtil.Callback;
+import me.rrs.greatwallpaper.diffutil.Callback;
 
 public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.ViewHolder> {
 

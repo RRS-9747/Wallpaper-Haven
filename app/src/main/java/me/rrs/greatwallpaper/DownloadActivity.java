@@ -29,7 +29,7 @@ public class DownloadActivity extends AppCompatActivity implements WallpaperAdap
     private Spinner categorySpinner;
     private final List<String> categoryList = new ArrayList<>();
     private ArrayAdapter<String> categoryAdapter;
-    private final Set<String> wallpaperUrls = new HashSet<>(); // Use Set to avoid duplicates
+    private final Set<String> wallpaperUrls = new HashSet<>();
     private WallpaperAdapter wallpaperAdapter;
 
     @Override

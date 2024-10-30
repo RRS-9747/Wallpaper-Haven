@@ -1,5 +1,6 @@
 package me.rrs.greatwallpaper;
 
+import android.app.WallpaperManager;
 import android.content.ContentValues;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -12,15 +13,19 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.transition.Transition;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 import com.startapp.sdk.adsbase.StartAppAd;
 import com.startapp.sdk.adsbase.adlisteners.AdDisplayListener;
 import com.startapp.sdk.adsbase.adlisteners.AdEventListener;
 
+import java.io.IOException;
 import java.io.OutputStream;
 
 public class FullImageActivity extends AppCompatActivity {
@@ -29,6 +34,7 @@ public class FullImageActivity extends AppCompatActivity {
     private StartAppAd startAppAd;
     private ImageView fullImageView;
     private Button downloadButton;
+    private Button setWallpaperButton; // Add reference for the new button
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +49,7 @@ public class FullImageActivity extends AppCompatActivity {
     private void initializeViews() {
         fullImageView = findViewById(R.id.fullImageView);
         downloadButton = findViewById(R.id.downloadButton);
+        setWallpaperButton = findViewById(R.id.setWallpaperButton); // Initialize the new button
         startAppAd = new StartAppAd(this);
         imageUrl = getIntent().getStringExtra("image_url");
     }
@@ -62,6 +69,7 @@ public class FullImageActivity extends AppCompatActivity {
 
     private void setupListeners() {
         downloadButton.setOnClickListener(v -> showAdBeforeDownload());
+        setWallpaperButton.setOnClickListener(v -> setWallpaper(imageUrl)); // Set listener for the new button
     }
 
     private void showAdBeforeDownload() {
@@ -106,7 +114,7 @@ public class FullImageActivity extends AppCompatActivity {
             return;
         }
 
-        Picasso.get().load(imageUrl).into(new com.squareup.picasso.Target() {
+        Picasso.get().load(imageUrl).into(new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                 saveImageToGallery(bitmap);
@@ -122,6 +130,29 @@ public class FullImageActivity extends AppCompatActivity {
                 // No specific actions needed here
             }
         });
+    }
+
+    private void setWallpaper(String imageUrl) {
+        Glide.with(this)
+                .asBitmap()
+                .load(imageUrl)
+                .into(new com.bumptech.glide.request.target.CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, Transition<? super Bitmap> transition) {
+                        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getApplicationContext());
+                        try {
+                            wallpaperManager.setBitmap(resource);
+                            showToast("Wallpaper set successfully!");
+                        } catch (IOException e) {
+                            showToast("Error setting wallpaper: " + e.getMessage());
+                        }
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        // Handle cleanup if needed
+                    }
+                });
     }
 
     private void saveImageToGallery(Bitmap bitmap) {

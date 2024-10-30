@@ -7,9 +7,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
-import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,18 +18,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 public class UploadActivity extends AppCompatActivity {
 
-    private Spinner categorySpinner;
     private TextView selectedFileTextView;
     private Uri selectedFileUri;
     private Dialog progressDialog;
     private ProgressBar progressBar;
     private TextView progressTextView;
-    private final List<String> categoryList = new ArrayList<>();
+
+    // Hardcode the community category
+    private static final String COMMUNITY_CATEGORY = "Community";
 
     private final ActivityResultLauncher<String> fileChooserLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -50,11 +48,9 @@ public class UploadActivity extends AppCompatActivity {
 
         initializeViews();
         setupListeners();
-        fetchCategoryList();
     }
 
     private void initializeViews() {
-        categorySpinner = findViewById(R.id.categorySpinner);
         selectedFileTextView = findViewById(R.id.selectedFileTextView);
         progressDialog = createProgressDialog();
     }
@@ -62,25 +58,6 @@ public class UploadActivity extends AppCompatActivity {
     private void setupListeners() {
         findViewById(R.id.selectFileButton).setOnClickListener(v -> openFileChooser());
         findViewById(R.id.uploadButton).setOnClickListener(v -> uploadFile());
-    }
-
-    private void fetchCategoryList() {
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        storage.getReference().listAll()
-                .addOnSuccessListener(listResult -> {
-                    categoryList.clear();
-                    for (StorageReference prefix : listResult.getPrefixes()) {
-                        categoryList.add(prefix.getName());
-                    }
-                    populateCategorySpinner();
-                })
-                .addOnFailureListener(e -> showToast(getString(R.string.failed_to_load_categories)));
-    }
-
-    private void populateCategorySpinner() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categoryList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(adapter);
     }
 
     private String getFileName(Uri uri) {
@@ -118,8 +95,11 @@ public class UploadActivity extends AppCompatActivity {
 
         progressDialog.show();
 
-        String selectedCategory = categorySpinner.getSelectedItem().toString();
-        String destinationPath = selectedCategory + "/" + selectedFileUri.getLastPathSegment();
+        // Generate a unique ID (UID)
+        String uid = UUID.randomUUID().toString().substring(0, 6); // Get first 6 characters
+        // Construct the filename using UID only
+        String fileName = uid + getFileExtension(selectedFileUri);
+        String destinationPath = COMMUNITY_CATEGORY + "/" + fileName;
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference fileRef = storage.getReference().child(destinationPath);
@@ -140,6 +120,14 @@ public class UploadActivity extends AppCompatActivity {
                 });
     }
 
+    private String getFileExtension(Uri uri) {
+        String fileName = getFileName(uri);
+        if (fileName.lastIndexOf(".") != -1) {
+            return fileName.substring(fileName.lastIndexOf("."));
+        }
+        return "";
+    }
+
     private Dialog createProgressDialog() {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_progress);
@@ -151,7 +139,6 @@ public class UploadActivity extends AppCompatActivity {
         return dialog;
     }
 
-
     private void updateProgressDialog(double progress) {
         progressBar.setProgress((int) progress);
         progressTextView.setText(String.format("%.0f%%", progress));
@@ -161,3 +148,6 @@ public class UploadActivity extends AppCompatActivity {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }
+
+
+
